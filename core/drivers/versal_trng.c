@@ -101,17 +101,16 @@
 #define TRNG_CTRL_3_DLEN_MASK		GENMASK_32(7, 0)
 #define TRNG_CTRL_3_DLEN_DEFVAL		0x9
 #define TRNG_CTRL_4			0x14
-#define TRNGPSX_DF_NUM_OF_BYTES_BEFORE_MIN_700CLKS_WAIT	8U /**< Number of bytes to be written before wait */
-#define TRNGPSX_PERS_STRING_LEN_IN_WORDS		12U	/**< Personalization string length in words */
-#define TRNGPSX_PERS_STRING_LEN_IN_BYTES		48U	/**< Personalization string length in bytes */
-#define TRNGPSX_WORD_LEN_IN_BYTES				4U	/**< Word length in bytes */
-#define TRNGPSX_BYTE_LEN_IN_BITS				8U	/**< Byte length in bits */
-#define TRNG_PER_STRNG_11    					(0x000000ACU)
-#define TRNGPSX_DF_2CLKS_WAIT					2U	/** < delay after 1byte */
-#define TRNGPSX_BLOCK_LEN_IN_BYTES				16U	/**< TRNG block length length in bytes */
-#define TRNGPSX_DF_700CLKS_WAIT					10U	/** < delay after 4bytes */
-#define TRNG_CTRL_PERSODISABLE_MASK   	 		0x00000400U
-#define TRNG_CTRL_PERSODISABLE_DEFVAL  			0x0U
+#define TRNG_DF_NUM_OF_BYTES_BEFORE_MIN_700CLKS_WAIT	8U
+#define TRNG_PERS_STRING_LEN_IN_WORDS		12U
+#define TRNG_WORD_LEN_IN_BYTES				4U
+#define TRNG_BYTE_LEN_IN_BITS				8U
+#define TRNG_PER_STRNG_11					(0x000000ACU)
+#define TRNG_DF_2CLKS_WAIT					2U
+#define TRNG_BLOCK_LEN_IN_BYTES				16U
+#define TRNG_DF_700CLKS_WAIT				10U
+#define TRNG_CTRL_PERSODISABLE_MASK			0x00000400U
+#define TRNG_CTRL_PERSODISABLE_DEFVAL		0x0U
 #endif
 
 #define TRNG_EXT_SEED_0			0x40
@@ -466,9 +465,8 @@ static int trng_write32_v2(vaddr_t addr, uint32_t mask, uint32_t value)
 	/* verify value written to specified address */
 	regval = io_read32(addr) & mask;
 
-	if (regval == (mask & value)) {
+	if (regval == (mask & value))
 		status = 0;
-	}
 
 	return status;
 }
@@ -478,29 +476,29 @@ static int trng_write_perstr(const struct versal_trng *trng, const uint8_t *pers
 	int status = 1;
 	volatile uint8_t idx = 0;
 	uint8_t cnt = 0;
-	uint32_t regval =0;
+	uint32_t regval = 0;
 
-	for(idx = 0; idx < TRNGPSX_PERS_STRING_LEN_IN_WORDS; idx++)
-	{
+	for (idx = 0; idx < TRNG_PERS_STRING_LEN_IN_WORDS; idx++) {
 		regval = 0;
-		for (cnt = 0; cnt < TRNGPSX_WORD_LEN_IN_BYTES; cnt++) 
-		{
-			regval = (regval << TRNGPSX_BYTE_LEN_IN_BITS) | perstr[(idx * TRNGPSX_WORD_LEN_IN_BYTES) + cnt];
+		for (cnt = 0; cnt < TRNG_WORD_LEN_IN_BYTES; cnt++) {
+			regval = (regval << TRNG_BYTE_LEN_IN_BITS)
+			| perstr[(idx * TRNG_WORD_LEN_IN_BYTES) + cnt];
 		}
 
-		trng_write32(trng->cfg.addr, (TRNG_PER_STRNG_11 - (idx * TRNGPSX_WORD_LEN_IN_BYTES)), regval);
+		trng_write32(trng->cfg.addr,
+			     TRNG_PER_STRNG_11 - (idx * TRNG_WORD_LEN_IN_BYTES),
+			     regval);
 	}
 
-	if (idx == TRNGPSX_PERS_STRING_LEN_IN_WORDS) {
+	if (idx == TRNG_PERS_STRING_LEN_IN_WORDS)
 		status = 0;
-	}
 
 	return status;
 }
 
 static int trng_write_seed(const struct versal_trng *trng, const uint8_t *seed, uint8_t dlen) {
 	volatile int status = 1;
-	uint32_t seed_len = (dlen + 1U) * TRNGPSX_BLOCK_LEN_IN_BYTES;
+	uint32_t seed_len = (dlen + 1U) * TRNG_BLOCK_LEN_IN_BYTES;
 	volatile uint32_t idx = 0U;
 	uint8_t cnt = 0U;
 	uint32_t bit = 0U;
@@ -508,18 +506,19 @@ static int trng_write_seed(const struct versal_trng *trng, const uint8_t *seed, 
 
 	while (idx < seed_len) {
 		seed_construct = 0U;
-		for (cnt = 0; cnt < TRNGPSX_BYTE_LEN_IN_BITS; cnt++) {
-			bit = (uint32_t)(seed[idx] >> (TRNGPSX_BYTE_LEN_IN_BITS - 1U - cnt)) & 0x01U;
+		for (cnt = 0; cnt < TRNG_BYTE_LEN_IN_BITS; cnt++) {
+			bit = (uint32_t)(seed[idx] >>
+				(TRNG_BYTE_LEN_IN_BITS - 1U - cnt)) & 0x01U;
 			trng_write32(trng->cfg.addr, TRNG_CTRL_4, bit);
 			seed_construct = (uint8_t)((seed_construct << 1U) | (uint8_t)bit);
 		}
 		if (seed_construct != seed[idx]) {
 			goto END;
 		}
-		udelay(TRNGPSX_DF_2CLKS_WAIT);
-		if ((idx % TRNGPSX_DF_NUM_OF_BYTES_BEFORE_MIN_700CLKS_WAIT) == 0U) {
-			udelay(TRNGPSX_DF_700CLKS_WAIT);
-		}
+		udelay(TRNG_DF_2CLKS_WAIT);
+		if ((idx % TRNG_DF_NUM_OF_BYTES_BEFORE_MIN_700CLKS_WAIT) == 0U)
+			udelay(TRNG_DF_700CLKS_WAIT);
+
 		idx++;
 	}
 	if (idx == seed_len) {
