@@ -715,7 +715,7 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 	if (ret != TEE_SUCCESS)
 		return ret;
 	/* DRNG Mode */
-	if (eseed != NULL) {
+	if (eseed) {
 		/* Enable TST mode and set PRNG mode for reseed operation*/
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
 				      TRNG_CTRL_PRNGMODE_MASK |
