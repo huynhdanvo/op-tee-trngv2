@@ -698,7 +698,7 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 	if (trng->cfg.version == TRNG_V2) {
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL_3,
 				      TRNG_CTRL_3_DLEN_MASK,
-					  (mul << TRNG_CTRL_3_DLEN_SHIFT));
+				      (mul << TRNG_CTRL_3_DLEN_SHIFT));
 		if (ret != TEE_SUCCESS)
 			return ret;
 	}
