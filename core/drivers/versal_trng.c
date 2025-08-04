@@ -703,8 +703,7 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 			return ret;
 	}
 
-	if (str != NULL)
-	{
+	if (str) {
 		trng_write_perstr(trng, str);
 		persmask = TRNG_CTRL_PERSODISABLE_DEFVAL;
 	}
@@ -739,21 +738,21 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 		/* Enable ring oscillators for random seed source */
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_OSC_EN,
 				      TRNG_OSC_EN_VAL_MASK,
-					  TRNG_OSC_EN_VAL_MASK);
+				      TRNG_OSC_EN_VAL_MASK);
 		if (ret != TEE_SUCCESS)
 			return ret;
 		/* Enable TRSSEN and set PRNG mode for reseed operation */
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
 				      TRNG_CTRL_PRNGMODE_MASK |
-					  TRNG_CTRL_TRSSEN_MASK |
-					  TRNG_CTRL_PRNGXS_MASK,
+				      TRNG_CTRL_TRSSEN_MASK |
+				      TRNG_CTRL_PRNGXS_MASK,
 				      TRNG_CTRL_TRSSEN_MASK);
 		if (ret != TEE_SUCCESS)
 			return ret;
 		/* Start reseed operation */
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
 				      TRNG_CTRL_PRNGSTART_MASK,
-					  TRNG_CTRL_PRNGSTART_MASK);
+				      TRNG_CTRL_PRNGSTART_MASK);
 		if (ret != TEE_SUCCESS)
 			return ret;
 	}
