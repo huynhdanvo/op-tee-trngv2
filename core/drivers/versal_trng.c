@@ -452,9 +452,9 @@ static void trng_write32(vaddr_t addr, size_t off, uint32_t val)
 }
 
 #if defined(CFG_VERSAL_RNG_DRV_V2)
-static int trng_write32_v2(vaddr_t addr, uint32_t mask, uint32_t value)
+static uint32_t trng_write32_v2(vaddr_t addr, uint32_t mask, uint32_t value)
 {
-	int status = 1;
+	uint32_t status = TEE_ERROR_GENERIC;
 	uint32_t regval;
 	uint32_t val;
 
@@ -466,7 +466,7 @@ static int trng_write32_v2(vaddr_t addr, uint32_t mask, uint32_t value)
 	regval = io_read32(addr) & mask;
 
 	if (regval == (mask & value))
-		status = 0;
+		status = TEE_SUCCESS;
 
 	return status;
 }
@@ -693,9 +693,14 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 #if defined(CFG_VERSAL_RNG_DRV_V2)
 	/* Configure DF Len */
 	uint32_t persmask = TRNG_CTRL_PERSODISABLE_MASK;
-	if (trng->cfg.version == TRNG_V2)
-	{
-		trng_write32_v2(trng->cfg.addr + TRNG_CTRL_3, TRNG_CTRL_3_DLEN_MASK, (mul << TRNG_CTRL_3_DLEN_SHIFT));
+	int ret = TEE_ERROR_GENERIC;
+
+	if (trng->cfg.version == TRNG_V2) {
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL_3,
+				      TRNG_CTRL_3_DLEN_MASK,
+					  (mul << TRNG_CTRL_3_DLEN_SHIFT));
+		if (ret != TEE_SUCCESS)
+			return ret;
 	}
 
 	if (str != NULL)
@@ -704,27 +709,53 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 		persmask = TRNG_CTRL_PERSODISABLE_DEFVAL;
 	}
 
-	trng_write32_v2(trng->cfg.addr + TRNG_CTRL, TRNG_CTRL_PERSODISABLE_MASK | TRNG_CTRL_PRNGSTART_MASK, persmask);
+	ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
+			      TRNG_CTRL_PERSODISABLE_MASK |
+			      TRNG_CTRL_PRNGSTART_MASK,
+			      persmask);
+	if (ret != TEE_SUCCESS)
+		return ret;
 	/* DRNG Mode */
 	if (eseed != NULL) {
 		/* Enable TST mode and set PRNG mode for reseed operation*/
-		trng_write32_v2(trng->cfg.addr + TRNG_CTRL, TRNG_CTRL_PRNGMODE_MASK | TRNG_CTRL_TSTMODE_MASK | TRNG_CTRL_TRSSEN_MASK, TRNG_CTRL_TSTMODE_MASK | TRNG_CTRL_TRSSEN_MASK);
-
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
+				      TRNG_CTRL_PRNGMODE_MASK |
+				      TRNG_CTRL_TSTMODE_MASK |
+				      TRNG_CTRL_TRSSEN_MASK,
+				      TRNG_CTRL_TSTMODE_MASK |
+				      TRNG_CTRL_TRSSEN_MASK);
+		if (ret != TEE_SUCCESS)
+			return ret;
 		/* Start reseed operation */
-		trng_write32_v2(trng->cfg.addr + TRNG_CTRL, TRNG_CTRL_PRNGSTART_MASK, TRNG_CTRL_PRNGSTART_MASK);
-		
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
+				      TRNG_CTRL_PRNGSTART_MASK,
+				      TRNG_CTRL_PRNGSTART_MASK);
+		if (ret != TEE_SUCCESS)
+			return ret;
 		/* For writing seed as an input to DF, PRNG start needs to be set */
 		trng_write_seed(trng, eseed, mul);
 	} 
 	else { /* HTRNG Mode */
 		/* Enable ring oscillators for random seed source */
-		trng_write32_v2(trng->cfg.addr + TRNG_OSC_EN, TRNG_OSC_EN_VAL_MASK, TRNG_OSC_EN_VAL_MASK);
-
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_OSC_EN,
+				      TRNG_OSC_EN_VAL_MASK,
+					  TRNG_OSC_EN_VAL_MASK);
+		if (ret != TEE_SUCCESS)
+			return ret;
 		/* Enable TRSSEN and set PRNG mode for reseed operation */
-		trng_write32_v2(trng->cfg.addr + TRNG_CTRL, TRNG_CTRL_PRNGMODE_MASK | TRNG_CTRL_TRSSEN_MASK | TRNG_CTRL_PRNGXS_MASK, TRNG_CTRL_TRSSEN_MASK);
-	
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
+				      TRNG_CTRL_PRNGMODE_MASK |
+					  TRNG_CTRL_TRSSEN_MASK |
+					  TRNG_CTRL_PRNGXS_MASK,
+				      TRNG_CTRL_TRSSEN_MASK);
+		if (ret != TEE_SUCCESS)
+			return ret;
 		/* Start reseed operation */
-		trng_write32_v2(trng->cfg.addr + TRNG_CTRL, TRNG_CTRL_PRNGSTART_MASK, TRNG_CTRL_PRNGSTART_MASK);
+		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL,
+				      TRNG_CTRL_PRNGSTART_MASK,
+					  TRNG_CTRL_PRNGSTART_MASK);
+		if (ret != TEE_SUCCESS)
+			return ret;
 	}
 	trng->stats.elapsed_seed_life = 0;
 #else
