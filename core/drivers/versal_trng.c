@@ -102,15 +102,15 @@
 #define TRNG_CTRL_3_DLEN_DEFVAL		0x9
 #define TRNG_CTRL_4			0x14
 #define TRNG_DF_NUM_OF_BYTES_BEFORE_MIN_700CLKS_WAIT	8U
-#define TRNG_PERS_STRING_LEN_IN_WORDS		12U
-#define TRNG_WORD_LEN_IN_BYTES				4U
-#define TRNG_BYTE_LEN_IN_BITS				8U
-#define TRNG_PER_STRNG_11					(0x000000ACU)
-#define TRNG_DF_2CLKS_WAIT					2U
-#define TRNG_BLOCK_LEN_IN_BYTES				16U
-#define TRNG_DF_700CLKS_WAIT				10U
-#define TRNG_CTRL_PERSODISABLE_MASK			0x00000400U
-#define TRNG_CTRL_PERSODISABLE_DEFVAL		0x0U
+#define TRNG_PERS_STRING_LEN_IN_WORDS	12U
+#define TRNG_WORD_LEN_IN_BYTES			4U
+#define TRNG_BYTE_LEN_IN_BITS			8U
+#define TRNG_PER_STRNG_11				(0x000000ACU)
+#define TRNG_DF_2CLKS_WAIT				2U
+#define TRNG_BLOCK_LEN_IN_BYTES			16U
+#define TRNG_DF_700CLKS_WAIT			10U
+#define TRNG_CTRL_PERSODISABLE_MASK		0x00000400U
+#define TRNG_CTRL_PERSODISABLE_DEFVAL	0x0U
 #endif
 
 #define TRNG_EXT_SEED_0			0x40
@@ -693,7 +693,7 @@ static TEE_Result trng_reseed_internal_nodf(struct versal_trng *trng,
 #if defined(CFG_VERSAL_RNG_DRV_V2)
 	/* Configure DF Len */
 	uint32_t persmask = TRNG_CTRL_PERSODISABLE_MASK;
-	int ret = TEE_ERROR_GENERIC;
+	uint32_t ret = TEE_ERROR_GENERIC;
 
 	if (trng->cfg.version == TRNG_V2) {
 		ret = trng_write32_v2(trng->cfg.addr + TRNG_CTRL_3,
